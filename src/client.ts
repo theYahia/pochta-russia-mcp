@@ -2,24 +2,42 @@ const BASE_URL = "https://otpravka-api.pochta.ru/1.0";
 const TRACKING_URL = "https://tracking.russianpost.ru/rtm34";
 const TIMEOUT = 15_000;
 
+export interface PochtaAuth {
+  token: string;
+  key: string;
+}
+
+function getAuth(): PochtaAuth {
+  // New env: POCHTA_TOKEN + POCHTA_KEY
+  const token = process.env.POCHTA_TOKEN ?? "";
+  const key = process.env.POCHTA_KEY ?? "";
+
+  // Backward compat: POCHTA_LOGIN + POCHTA_PASSWORD + POCHTA_TOKEN
+  const login = process.env.POCHTA_LOGIN ?? "";
+  const password = process.env.POCHTA_PASSWORD ?? "";
+
+  if (token && key) {
+    return { token, key };
+  }
+  if (login && password && token) {
+    return {
+      token,
+      key: "Basic " + Buffer.from(`${login}:${password}`).toString("base64"),
+    };
+  }
+
+  throw new Error(
+    "Требуется авторизация. Укажите POCHTA_TOKEN + POCHTA_KEY, " +
+    "либо POCHTA_LOGIN + POCHTA_PASSWORD + POCHTA_TOKEN. " +
+    "Получите их в личном кабинете: https://otpravka.pochta.ru/"
+  );
+}
+
 export class PochtaClient {
-  private basicAuth: string;
-  private accessToken: string;
+  private auth: PochtaAuth;
 
-  constructor() {
-    const login = process.env.POCHTA_LOGIN ?? "";
-    const password = process.env.POCHTA_PASSWORD ?? "";
-    const token = process.env.POCHTA_TOKEN ?? "";
-
-    if (!login || !password || !token) {
-      throw new Error(
-        "Переменные окружения POCHTA_LOGIN, POCHTA_PASSWORD и POCHTA_TOKEN обязательны. " +
-        "Получите их в личном кабинете Почты России: https://otpravka.pochta.ru/"
-      );
-    }
-
-    this.basicAuth = "Basic " + Buffer.from(`${login}:${password}`).toString("base64");
-    this.accessToken = token;
+  constructor(auth?: PochtaAuth) {
+    this.auth = auth ?? getAuth();
   }
 
   async get(path: string, params?: Record<string, string>): Promise<unknown> {
@@ -36,12 +54,17 @@ export class PochtaClient {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT);
 
+    // Determine Authorization header
+    const authorization = this.auth.key.startsWith("Basic ")
+      ? this.auth.key
+      : `AccessToken ${this.auth.key}`;
+
     try {
       const response = await fetch(url, {
         method,
         headers: {
-          "Authorization": this.basicAuth,
-          "X-User-Authorization": `accessToken ${this.accessToken}`,
+          "Authorization": authorization,
+          "X-User-Authorization": `accessToken ${this.auth.token}`,
           "Content-Type": "application/json",
           "Accept": "application/json;charset=UTF-8",
         },
@@ -75,6 +98,15 @@ export class PochtaClient {
   }
 
   async trackByBarcode(barcode: string): Promise<unknown> {
+    const login = process.env.POCHTA_LOGIN ?? "";
+    const password = process.env.POCHTA_PASSWORD ?? "";
+
+    // Tracking SOAP API needs login/password
+    if (!login || !password) {
+      // Fallback: use REST tracking endpoint
+      return this.get(`/shipment/search?query=${encodeURIComponent(barcode)}`);
+    }
+
     const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
   xmlns:oper="http://russianpost.org/operationhistory"
@@ -89,8 +121,8 @@ export class PochtaClient {
         <data:Language>RUS</data:Language>
       </data:OperationHistoryRequest>
       <data:AuthorizationHeader soapenv:mustUnderstand="1">
-        <data:login>${process.env.POCHTA_LOGIN}</data:login>
-        <data:password>${process.env.POCHTA_PASSWORD}</data:password>
+        <data:login>${login}</data:login>
+        <data:password>${password}</data:password>
       </data:AuthorizationHeader>
     </oper:getOperationHistory>
   </soap:Body>
@@ -159,10 +191,14 @@ export class PochtaClient {
   }
 
   private extractTag(block: string, parentTag: string, childTag: string): string | null {
-    const parentRegex = new RegExp(`<${parentTag}>([\\s\\S]*?)</${parentTag}>`);
-    const parentMatch = parentRegex.exec(block);
-    if (!parentMatch) return null;
-    return this.extractSimpleTag(parentMatch[1], childTag);
+    const openTag = "<" + parentTag + ">";
+    const closeTag = "</" + parentTag + ">";
+    const start = block.indexOf(openTag);
+    if (start === -1) return null;
+    const end = block.indexOf(closeTag, start);
+    if (end === -1) return null;
+    const inner = block.substring(start + openTag.length, end);
+    return this.extractSimpleTag(inner, childTag);
   }
 
   private extractSimpleTag(block: string, tag: string): string | null {

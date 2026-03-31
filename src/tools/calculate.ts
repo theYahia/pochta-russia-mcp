@@ -2,8 +2,6 @@ import { z } from "zod";
 import { PochtaClient } from "../client.js";
 import type { PochtaCalcResult } from "../types.js";
 
-const client = new PochtaClient();
-
 export const calculateSchema = z.object({
   from_index: z.string().describe("Почтовый индекс отправителя (6 цифр)"),
   to_index: z.string().describe("Почтовый индекс получателя (6 цифр)"),
@@ -21,6 +19,9 @@ export const calculateSchema = z.object({
   dimension_type: z.enum(["S", "M", "L", "XL", "OVERSIZED"]).optional().describe("Типоразмер"),
 });
 
+let _client: PochtaClient;
+function client() { return _client ??= new PochtaClient(); }
+
 export async function handleCalculate(params: z.infer<typeof calculateSchema>): Promise<string> {
   const body: Record<string, unknown> = {
     "index-from": params.from_index,
@@ -32,7 +33,7 @@ export async function handleCalculate(params: z.infer<typeof calculateSchema>): 
   if (params.declared_value !== undefined) body["declared-value"] = params.declared_value;
   if (params.dimension_type) body["dimension-type"] = params.dimension_type;
 
-  const result = (await client.post("/tariff", body)) as PochtaCalcResult;
+  const result = (await client().post("/tariff", body)) as PochtaCalcResult;
 
   return JSON.stringify({
     стоимость_всего_коп: result.total_rate,
