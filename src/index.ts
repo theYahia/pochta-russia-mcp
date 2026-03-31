@@ -6,7 +6,7 @@ import { trackSchema, handleTrack } from "./tools/tracking.js";
 import { calculateSchema, handleCalculate } from "./tools/calculate.js";
 import { getOfficesSchema, handleGetOffices } from "./tools/offices.js";
 
-const server = new McpServer({ name: "pochta-russia-mcp", version: "1.0.0" });
+const server = new McpServer({ name: "pochta-russia-mcp", version: "1.0.1" });
 
 server.tool("track", "Отслеживание почтового отправления Почты России по трек-номеру.", trackSchema.shape,
   async (params) => ({ content: [{ type: "text", text: await handleTrack(params) }] }));

@@ -1,12 +1,18 @@
 {
   "name": "@theyahia/pochta-russia-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for Russian Post (Почта России) API — tracking, tariff calculation, post office search. 3 tools.",
   "type": "module",
   "main": "dist/index.js",
-  "bin": { "pochta-russia-mcp": "dist/index.js" },
-  "files": ["dist"],
-  "engines": { "node": ">=18.0.0" },
+  "bin": {
+    "pochta-russia-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
@@ -22,11 +28,29 @@
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "mcpName": "io.github.theYahia/pochta-russia-mcp",
-  "keywords": ["mcp", "mcp-server", "model-context-protocol", "claude", "ai", "russian-api", "pochta", "russian-post", "delivery", "shipping", "logistics", "tracking"],
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude",
+    "ai",
+    "russian-api",
+    "pochta",
+    "russian-post",
+    "delivery",
+    "shipping",
+    "logistics",
+    "tracking"
+  ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/theYahia/pochta-russia-mcp.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/theYahia/pochta-russia-mcp.git"
+  },
   "homepage": "https://github.com/theYahia/pochta-russia-mcp#readme",
   "author": "Yahia"
 }
