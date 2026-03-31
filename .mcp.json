@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "pochta": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@theyahia/pochta-russia-mcp"
+      ],
+      "env": {
+        "POCHTA_LOGIN": "YOUR_LOGIN",
+        "POCHTA_PASSWORD": "YOUR_PASSWORD",
+        "POCHTA_TOKEN": "YOUR_TOKEN"
+      }
+    }
+  }
+}
