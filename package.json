@@ -1,7 +1,7 @@
 {
   "name": "@theyahia/pochta-russia-mcp",
   "version": "1.1.0",
-  "description": "MCP server for Russian Post (Почта России) API — tracking, tariff, delivery time, offices, zip codes, address normalization. 6 tools.",
+  "description": "MCP server for Russian Post — tracking, tariff calculation, post offices (Russia)",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -48,7 +48,11 @@
     "delivery",
     "shipping",
     "logistics",
-    "tracking"
+    "tracking",
+    "pochta-russia",
+    "api",
+    "typescript",
+    "postal"
   ],
   "license": "MIT",
   "repository": {
