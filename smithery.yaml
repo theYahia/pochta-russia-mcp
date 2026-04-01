@@ -1,0 +1,46 @@
+name: pochta-russia-mcp
+description: MCP server for Russian Post (Почта России) — tracking, tariffs, delivery time, offices, zip codes, address normalization
+version: 1.1.0
+license: MIT
+
+tools:
+  - name: track
+    description: Track a Russian Post shipment by barcode
+  - name: calculate
+    description: Calculate shipping cost and delivery time
+  - name: delivery_time
+    description: Estimate delivery time between two zip codes
+  - name: get_offices
+    description: Search post offices by zip code or city
+  - name: zip_lookup
+    description: Look up information by postal code
+  - name: normalize_address
+    description: Normalize a free-form address via Russian Post API
+
+auth:
+  type: env
+  variables:
+    - name: POCHTA_TOKEN
+      description: Access token from Russian Post API (otpravka.pochta.ru)
+      required: true
+    - name: POCHTA_KEY
+      description: Authorization key (API key or Basic auth string)
+      required: true
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      POCHTA_TOKEN:
+        type: string
+        description: Access token
+      POCHTA_KEY:
+        type: string
+        description: Authorization key
+    required:
+      - POCHTA_TOKEN
+      - POCHTA_KEY
+  commandFunction:
+    |-
+    (config) => ({ command: 'npx', args: ['-y', '@theyahia/pochta-russia-mcp'], env: { POCHTA_TOKEN: config.POCHTA_TOKEN, POCHTA_KEY: config.POCHTA_KEY } })

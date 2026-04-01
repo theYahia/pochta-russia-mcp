@@ -2,8 +2,6 @@ import { z } from "zod";
 import { PochtaClient } from "../client.js";
 import type { PochtaOffice } from "../types.js";
 
-const client = new PochtaClient();
-
 export const getOfficesSchema = z.object({
   postal_code: z.string().optional().describe("Почтовый индекс для поиска конкретного отделения"),
   settlement: z.string().optional().describe("Населённый пункт для поиска отделений"),
@@ -11,9 +9,12 @@ export const getOfficesSchema = z.object({
   top: z.number().int().min(1).max(100).default(20).describe("Количество результатов"),
 });
 
+let _client: PochtaClient;
+function client() { return _client ??= new PochtaClient(); }
+
 export async function handleGetOffices(params: z.infer<typeof getOfficesSchema>): Promise<string> {
   if (params.postal_code) {
-    const result = (await client.get(`/postoffice/1.0/${params.postal_code}`)) as PochtaOffice;
+    const result = (await client().get(`/postoffice/1.0/${params.postal_code}`)) as PochtaOffice;
     return JSON.stringify({
       индекс: result.postal_code,
       адрес: result.address ? [
@@ -34,7 +35,7 @@ export async function handleGetOffices(params: z.infer<typeof getOfficesSchema>)
   if (params.region) query.region = params.region;
   query.top = String(params.top);
 
-  const result = (await client.get("/postoffice/1.0/nearby", query)) as PochtaOffice[];
+  const result = (await client().get("/postoffice/1.0/nearby", query)) as PochtaOffice[];
 
   if (!Array.isArray(result) || result.length === 0) {
     return "Отделения не найдены по заданным параметрам.";
