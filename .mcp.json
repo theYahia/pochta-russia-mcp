@@ -7,9 +7,9 @@
         "@theyahia/pochta-russia-mcp"
       ],
       "env": {
+        "POCHTA_TOKEN": "YOUR_ACCESS_TOKEN",
         "POCHTA_LOGIN": "YOUR_LOGIN",
-        "POCHTA_PASSWORD": "YOUR_PASSWORD",
-        "POCHTA_TOKEN": "YOUR_TOKEN"
+        "POCHTA_PASSWORD": "YOUR_PASSWORD"
       }
     }
   }
