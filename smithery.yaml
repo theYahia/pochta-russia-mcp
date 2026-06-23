@@ -1,11 +1,11 @@
 name: pochta-russia-mcp
 description: MCP server for Russian Post (Почта России) — tracking, tariffs, delivery time, offices, zip codes, address normalization
-version: 1.1.0
+version: 2.0.0
 license: MIT
 
 tools:
   - name: track
-    description: Track a Russian Post shipment by barcode
+    description: Track a Russian Post shipment by barcode (needs login + password)
   - name: calculate
     description: Calculate shipping cost and delivery time
   - name: delivery_time
@@ -21,10 +21,13 @@ auth:
   type: env
   variables:
     - name: POCHTA_TOKEN
-      description: Access token from Russian Post API (otpravka.pochta.ru)
+      description: Access token from otpravka.pochta.ru (sent as Authorization AccessToken header)
       required: true
-    - name: POCHTA_KEY
-      description: Authorization key (API key or Basic auth string)
+    - name: POCHTA_LOGIN
+      description: Cabinet login (part of X-User-Authorization Basic)
+      required: true
+    - name: POCHTA_PASSWORD
+      description: Cabinet password (part of X-User-Authorization Basic)
       required: true
 
 startCommand:
@@ -35,12 +38,16 @@ startCommand:
       POCHTA_TOKEN:
         type: string
         description: Access token
-      POCHTA_KEY:
+      POCHTA_LOGIN:
         type: string
-        description: Authorization key
+        description: Cabinet login
+      POCHTA_PASSWORD:
+        type: string
+        description: Cabinet password
     required:
       - POCHTA_TOKEN
-      - POCHTA_KEY
+      - POCHTA_LOGIN
+      - POCHTA_PASSWORD
   commandFunction:
     |-
-    (config) => ({ command: 'npx', args: ['-y', '@theyahia/pochta-russia-mcp'], env: { POCHTA_TOKEN: config.POCHTA_TOKEN, POCHTA_KEY: config.POCHTA_KEY } })
+    (config) => ({ command: 'npx', args: ['-y', '@theyahia/pochta-russia-mcp'], env: { POCHTA_TOKEN: config.POCHTA_TOKEN, POCHTA_LOGIN: config.POCHTA_LOGIN, POCHTA_PASSWORD: config.POCHTA_PASSWORD } })

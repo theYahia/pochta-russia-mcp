@@ -1,14 +1,41 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
 // Mock env before importing
 vi.stubEnv("POCHTA_TOKEN", "test-token");
 vi.stubEnv("POCHTA_KEY", "test-key");
 
+const TOOL_NAMES = [
+  "calculate",
+  "delivery_time",
+  "get_offices",
+  "normalize_address",
+  "track",
+  "zip_lookup",
+];
+
 describe("Server creation", () => {
   it("creates server with 6 tools", async () => {
-    const { createServer } = await import("../src/index.js");
+    const { createServer, TOOL_COUNT } = await import("../src/index.js");
     const server = createServer();
     expect(server).toBeDefined();
+    expect(TOOL_COUNT).toBe(6);
+  });
+
+  it("lists exactly the 6 expected tools over an in-memory transport", async () => {
+    const { createServer } = await import("../src/index.js");
+    const server = createServer();
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test", version: "1.0.0" });
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    const { tools } = await client.listTools();
+    expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
+    for (const t of tools) expect(t.inputSchema.type).toBe("object");
+
+    await client.close();
+    await server.close();
   });
 });
 

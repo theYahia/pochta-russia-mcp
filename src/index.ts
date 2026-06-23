@@ -2,6 +2,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+import { VERSION } from "./version.js";
 import { trackSchema, handleTrack } from "./tools/tracking.js";
 import { calculateSchema, handleCalculate } from "./tools/calculate.js";
 import { getOfficesSchema, handleGetOffices } from "./tools/offices.js";
@@ -9,28 +11,65 @@ import { zipLookupSchema, handleZipLookup } from "./tools/zip_lookup.js";
 import { deliveryTimeSchema, handleDeliveryTime } from "./tools/delivery_time.js";
 import { normalizeAddressSchema, handleNormalizeAddress } from "./tools/normalize_address.js";
 
-const VERSION = "1.1.0";
+interface ToolDef {
+  name: string;
+  description: string;
+  schema: z.ZodObject<z.ZodRawShape>;
+  handler: (params: never) => Promise<string>;
+}
+
+const TOOLS: ToolDef[] = [
+  {
+    name: "track",
+    description: "Отслеживание почтового отправления Почты России по трек-номеру.",
+    schema: trackSchema,
+    handler: handleTrack as (params: never) => Promise<string>,
+  },
+  {
+    name: "calculate",
+    description: "Расчёт стоимости и сроков доставки Почтой России.",
+    schema: calculateSchema,
+    handler: handleCalculate as (params: never) => Promise<string>,
+  },
+  {
+    name: "get_offices",
+    description: "Поиск почтовых отделений по индексу или населённому пункту.",
+    schema: getOfficesSchema,
+    handler: handleGetOffices as (params: never) => Promise<string>,
+  },
+  {
+    name: "zip_lookup",
+    description: "Информация по почтовому индексу: регион, город, график работы.",
+    schema: zipLookupSchema,
+    handler: handleZipLookup as (params: never) => Promise<string>,
+  },
+  {
+    name: "delivery_time",
+    description: "Расчёт сроков доставки между двумя индексами.",
+    schema: deliveryTimeSchema,
+    handler: handleDeliveryTime as (params: never) => Promise<string>,
+  },
+  {
+    name: "normalize_address",
+    description: "Нормализация адреса через API Почты России.",
+    schema: normalizeAddressSchema,
+    handler: handleNormalizeAddress as (params: never) => Promise<string>,
+  },
+];
+
+export const TOOL_COUNT = TOOLS.length;
 
 function createServer(): McpServer {
   const server = new McpServer({ name: "pochta-russia-mcp", version: VERSION });
 
-  server.tool("track", "Отслеживание почтового отправления Почты России по трек-номеру.", trackSchema.shape,
-    async (params) => ({ content: [{ type: "text", text: await handleTrack(params) }] }));
-
-  server.tool("calculate", "Расчёт стоимости и сроков доставки Почтой России.", calculateSchema.shape,
-    async (params) => ({ content: [{ type: "text", text: await handleCalculate(params) }] }));
-
-  server.tool("get_offices", "Поиск почтовых отделений по индексу или населённому пункту.", getOfficesSchema.shape,
-    async (params) => ({ content: [{ type: "text", text: await handleGetOffices(params) }] }));
-
-  server.tool("zip_lookup", "Информация по почтовому индексу: регион, город, график работы.", zipLookupSchema.shape,
-    async (params) => ({ content: [{ type: "text", text: await handleZipLookup(params) }] }));
-
-  server.tool("delivery_time", "Расчёт сроков доставки между двумя индексами.", deliveryTimeSchema.shape,
-    async (params) => ({ content: [{ type: "text", text: await handleDeliveryTime(params) }] }));
-
-  server.tool("normalize_address", "Нормализация адреса через API Почты России.", normalizeAddressSchema.shape,
-    async (params) => ({ content: [{ type: "text", text: await handleNormalizeAddress(params) }] }));
+  const seen = new Set<string>();
+  for (const tool of TOOLS) {
+    if (seen.has(tool.name)) throw new Error(`Duplicate tool name: ${tool.name}`);
+    seen.add(tool.name);
+    server.tool(tool.name, tool.description, tool.schema.shape, async (params) => ({
+      content: [{ type: "text", text: await tool.handler(params as never) }],
+    }));
+  }
 
   return server;
 }
@@ -40,7 +79,7 @@ export { createServer };
 async function main() {
   const args = process.argv.slice(2);
   const httpMode = args.includes("--http");
-  const portArg = args.find(a => a.startsWith("--port="));
+  const portArg = args.find((a) => a.startsWith("--port="));
   const port = portArg ? parseInt(portArg.split("=")[1], 10) : 3000;
 
   const server = createServer();
@@ -51,7 +90,9 @@ async function main() {
     );
     const http = await import("node:http");
 
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => crypto.randomUUID() });
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => crypto.randomUUID(),
+    });
     await server.connect(transport);
 
     const httpServer = http.createServer(async (req, res) => {
@@ -60,7 +101,7 @@ async function main() {
         await transport.handleRequest(req, res);
       } else if (url.pathname === "/health") {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: "ok", version: VERSION, tools: 6 }));
+        res.end(JSON.stringify({ status: "ok", version: VERSION, tools: TOOL_COUNT }));
       } else {
         res.writeHead(404);
         res.end("Not found");
@@ -68,14 +109,19 @@ async function main() {
     });
 
     httpServer.listen(port, () => {
-      console.error(`[pochta-russia-mcp] HTTP-сервер на порту ${port}. 6 инструментов.`);
+      console.error(`[pochta-russia-mcp] HTTP-сервер на порту ${port}. ${TOOL_COUNT} инструментов.`);
       console.error(`[pochta-russia-mcp] MCP endpoint: http://localhost:${port}/mcp`);
     });
   } else {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error(`[pochta-russia-mcp] Сервер запущен (stdio). 6 инструментов. v${VERSION}`);
+    console.error(
+      `[pochta-russia-mcp] Сервер запущен (stdio). ${TOOL_COUNT} инструментов. v${VERSION}`,
+    );
   }
 }
 
-main().catch((error) => { console.error("[pochta-russia-mcp] Ошибка:", error); process.exit(1); });
+main().catch((error) => {
+  console.error("[pochta-russia-mcp] Ошибка:", error);
+  process.exit(1);
+});
