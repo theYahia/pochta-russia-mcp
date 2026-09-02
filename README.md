@@ -1,10 +1,10 @@
-# pochta-russia-mcp
+# MCP-сервер для Почты России — отслеживание посылок и расчёт доставки через ИИ
 
 [![npm](https://img.shields.io/npm/v/@theyahia/pochta-russia-mcp)](https://www.npmjs.com/package/@theyahia/pochta-russia-mcp)
 [![CI](https://github.com/theYahia/pochta-russia-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/theYahia/pochta-russia-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-MCP-сервер для API Почты России — отслеживание, расчёт тарифов, сроки доставки, поиск отделений, индексы, нормализация адресов.
+Если вы искали, как отследить отправление Почты России по трек-номеру из чата, посчитать тариф и срок доставки или найти индекс и ближайшее отделение — это оно. 6 инструментов: трекинг, расчёт стоимости и сроков, поиск отделений, индексы, нормализация адресов. Спрашиваете «где посылка 12345678901234» — получаете статус, а не страницу с капчей.
 
 ## Возможности (6 инструментов)
 
