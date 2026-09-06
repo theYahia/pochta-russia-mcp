@@ -1,17 +1,3 @@
-> ## 🗄 Репозиторий заархивирован
->
-> Разработка переехала в **[theYahia/WWmcp](https://github.com/theYahia/WWmcp)** — монорепозиторий MCP-серверов для незападных API: СНГ, MENA, Африка, LATAM, Юго-Восточная Азия. Общее ядро `@theyahia/mcp-core`, единый CI, единый релизный конвейер.
->
-> Актуальная версия того, что лежало здесь: [`servers/pochta-russia/`](https://github.com/theYahia/WWmcp/tree/main/servers/pochta-russia)
->
-> Пакет в npm прежний — [`@theyahia/pochta-russia-mcp`](https://www.npmjs.com/package/@theyahia/pochta-russia-mcp), ставится и работает как раньше.
-> Здесь больше ничего не обновляется. Задачи и pull request'ы — в WWmcp.
->
-> **Archived — development moved to [theYahia/WWmcp](https://github.com/theYahia/WWmcp),** a monorepo of MCP servers for non-Western APIs.
-> The current version of this package now lives at [`servers/pochta-russia/`](https://github.com/theYahia/WWmcp/tree/main/servers/pochta-russia).
-> The npm package [`@theyahia/pochta-russia-mcp`](https://www.npmjs.com/package/@theyahia/pochta-russia-mcp) is unchanged.
-> Please open issues and pull requests there.
-
 # MCP-сервер для Почты России — отслеживание посылок и расчёт доставки через ИИ
 
 [![npm](https://img.shields.io/npm/v/@theyahia/pochta-russia-mcp)](https://www.npmjs.com/package/@theyahia/pochta-russia-mcp)
